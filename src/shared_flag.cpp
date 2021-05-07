@@ -1,3 +1,10 @@
+/**
+ * @file shared_flag.cpp
+ * @brief Defines a class which can read and write the state of a shared flag.
+ * @author Peter Bloomfield (https://peter.bloomfield.online)
+ * @copyright MIT License
+ */
+
 #include "shared_flag/shared_flag.hpp"
 #include <utility>
 

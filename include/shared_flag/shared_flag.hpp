@@ -1,3 +1,10 @@
+/**
+ * @file shared_flag.hpp
+ * @brief Declares a class which can read and write the state of a shared flag.
+ * @author Peter Bloomfield (https://peter.bloomfield.online)
+ * @copyright MIT License
+ */
+
 #ifndef PRB_SHARED_FLAG_HPP_INCLUDED
 #define PRB_SHARED_FLAG_HPP_INCLUDED
 

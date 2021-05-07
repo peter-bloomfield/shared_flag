@@ -1,3 +1,10 @@
+/**
+ * @file shared_flag_reader.cpp
+ * @brief Defines a class which can read the state of a shared flag.
+ * @author Peter Bloomfield (https://peter.bloomfield.online)
+ * @copyright MIT License
+ */
+
 #include "shared_flag/shared_flag_reader.hpp"
 #include <utility>
 

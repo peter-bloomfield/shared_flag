@@ -1,3 +1,10 @@
+/**
+ * @file shared_flag_reader.test.hpp
+ * @brief Defines unit tests for the shared_flag_reader class.
+ * @author Peter Bloomfield (https://peter.bloomfield.online)
+ * @copyright MIT License
+ */
+
 #include "shared_flag/shared_flag.hpp"
 #include <future>
 #include <gtest/gtest.h>
