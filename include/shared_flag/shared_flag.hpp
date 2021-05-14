@@ -28,10 +28,10 @@ namespace prb
      * Example of using the flag to terminate a worker thread:
      * 
      * @code
-     *      auto task = [](shared_flag_reader flagReader)
+     *      auto task = [](shared_flag_reader flag)
      *      {
      *          // Keep looping until signalled to stop.
-     *          while (!flagReader.wait_for(1s))
+     *          while (!flag.wait_for(1s))
      *          {
      *              // Do regular work in the background here.
      *          }
