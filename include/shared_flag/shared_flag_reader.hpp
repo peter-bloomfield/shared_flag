@@ -312,11 +312,11 @@ namespace prb
     template <class Rep, class Period>
     bool shared_flag_reader::wait_for(const std::chrono::duration<Rep, Period> & timeout_duration) const
     {
-        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
+        std::shared_lock outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        std::unique_lock innerLock{ m_state->m_state_data_mtx };
         m_state->m_cond_var.wait_for(innerLock, timeout_duration, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }
@@ -324,11 +324,11 @@ namespace prb
     template <class Clock, class Duration>
     bool shared_flag_reader::wait_until(const std::chrono::time_point<Clock,Duration> & timeout_time) const
     {
-        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
+        std::shared_lock outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        std::unique_lock innerLock{ m_state->m_state_data_mtx };
         m_state->m_cond_var.wait_until(innerLock, timeout_time, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }

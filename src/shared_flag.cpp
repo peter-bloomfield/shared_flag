@@ -48,11 +48,11 @@ namespace prb
 
     void shared_flag::set()
     {
-        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
+        std::shared_lock outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        std::unique_lock innerLock{ m_state->m_state_data_mtx };
         if (!m_state->m_flag)
         {
             m_state->m_flag = true;
