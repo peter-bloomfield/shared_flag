@@ -261,7 +261,7 @@ namespace prb
         mutable std::shared_mutex m_statePointerMutex;
 
         // Forward declaration to the shared state structure.
-        struct State;
+        struct state;
 
         /**
          * A pointer to the shared state referenced by this instance.
@@ -269,15 +269,17 @@ namespace prb
          *  shared_flag_reader was default-constructed, or the shared state was moved away.
          * 
          * Access to this variable is protected by m_statePointerMutex.
+         * 
+         * @todo Manage this manually in future so that we can count the number of remaining writers
          */
-        std::shared_ptr<State> m_state;
+        std::shared_ptr<state> m_state;
     };
 
     /**
      * Contains the shared state referenced by shared_flag_reader and shared_flag instances.
      * This contains the flag value and the synchronisation primitives which are waited-upon.
      */
-    struct shared_flag_reader::State
+    struct shared_flag_reader::state
     {
         /**
          * Protects access to m_conditionVariable and m_flag.
@@ -314,7 +316,7 @@ namespace prb
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(State::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
         m_state->m_conditionVariable.wait_for(innerLock, timeoutDuration, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }
@@ -326,7 +328,7 @@ namespace prb
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(State::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
         m_state->m_conditionVariable.wait_until(innerLock, timeoutTime, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }

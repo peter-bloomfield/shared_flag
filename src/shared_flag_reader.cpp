@@ -72,7 +72,7 @@ namespace prb
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::lock_guard<decltype(State::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::lock_guard<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
         return m_state->m_flag;
     }
 
@@ -87,7 +87,7 @@ namespace prb
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(State::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
         m_state->m_conditionVariable.wait(innerLock, [this]{ return m_state->m_flag; });
     }
 }

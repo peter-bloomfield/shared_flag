@@ -15,7 +15,7 @@ namespace prb
 
     shared_flag::shared_flag()
     {
-        m_state = std::make_shared<State>();
+        m_state = std::make_shared<state>();
     }
 
     shared_flag::shared_flag(const shared_flag & other) : shared_flag_reader(other)
@@ -52,7 +52,7 @@ namespace prb
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(State::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
         if (!m_state->m_flag)
         {
             m_state->m_flag = true;
