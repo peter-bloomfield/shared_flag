@@ -28,10 +28,10 @@ namespace prb
      * Example of using the flag to terminate a worker thread:
      * 
      * @code
-     *      auto backgroundTask = [](shared_flag_reader flagReader)
+     *      auto task = [](shared_flag_reader flagReader)
      *      {
      *          // Keep looping until signalled to stop.
-     *          while (!flagReader.waitFor(1s))
+     *          while (!flagReader.wait_for(1s))
      *          {
      *              // Do regular work in the background here.
      *          }
@@ -39,13 +39,13 @@ namespace prb
      *      
      *      // Start the thread, and give it read-only access to the flag.
      *      shared_flag flag;
-     *      std::thread t{ backgroundTask, flag };
+     *      std::thread task_thread{ task, flag };
      * 
      *      // Do some other long-running task here.
      * 
      *      // Signal the thread to stop.
      *      flag.set();
-     *      t.join();
+     *      task_thread.join();
      * @endcode
      * 
      * @note This class is thread-safe, meaning multiple threads can safely set, query, and wait on

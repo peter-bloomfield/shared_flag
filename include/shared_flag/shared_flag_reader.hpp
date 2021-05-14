@@ -33,10 +33,10 @@ namespace prb
      * Example of using the flag to terminate a worker thread:
      * 
      * @code
-     *      auto backgroundTask = [](shared_flag_reader flagReader)
+     *      auto task = [](shared_flag_reader flagReader)
      *      {
      *          // Keep looping until signalled to stop.
-     *          while (!flagReader.waitFor(1s))
+     *          while (!flagReader.wait_for(1s))
      *          {
      *              // Do regular work in the background here.
      *          }
@@ -44,13 +44,13 @@ namespace prb
      *      
      *      // Start the thread, and give it read-only access to the flag.
      *      shared_flag flag;
-     *      std::thread t{ backgroundTask, flag };
+     *      std::thread task_thread{ task, flag };
      * 
      *      // Do some other long-running task here.
      * 
      *      // Signal the thread to stop.
      *      flag.set();
-     *      t.join();
+     *      task_thread.join();
      * @endcode
      * 
      * @note This class is thread safe, meaning multiple threads can query and wait on the same flag
@@ -147,7 +147,7 @@ namespace prb
 
         /**
          * Check if this instance contains a reference to a shared state.
-         * Calls to isSet(), wait(), waitFor(), and waitUntil() will fail if there is no reference
+         * Calls to get(), wait(), wait_for(), and wait_until() will fail if there is no reference
          *  to a shared state. This will happen if the contents of this object have been moved away.
          * 
          * @return Returns true if this object contains a reference to a shared state. Returns false
@@ -178,7 +178,7 @@ namespace prb
          * 
          *      shared_flag_reader flag{ ... };
          *      if (flag)
-         *          doSomething();
+         *          do_something();
          * 
          * @return Returns true if the flag has been set. Returns false otherwise.
          * @throw std::logic_error This instance does not contain a reference to a shared state.
@@ -206,7 +206,7 @@ namespace prb
          * Block the current thread until the flag has been set or the specified time has elapsed.
          * This will return immediately if the flag was already set.
          * 
-         * @param timeoutDuration The maximum period of time to block for. If this time elapses
+         * @param timeout_duration The maximum period of time to block for. If this time elapses
          *  before the flag has been set then the function will return false.
          * @return Returns true if the flag has been set. Returns false if the flag had not been set
          *  when the timeout expired.
@@ -216,13 +216,13 @@ namespace prb
          * @note It is safe to have multiple theads waiting on the same instance at the same time.
          */
         template <class Rep, class Period>
-        bool wait_for(const std::chrono::duration<Rep, Period> & timeoutDuration) const;
+        bool wait_for(const std::chrono::duration<Rep, Period> & timeout_duration) const;
 
         /**
          * Block the current thread until the flag has been set or the specified time is reached.
          * This will return immediately if the flag was already set.
          * 
-         * @param timeoutTime The maximum time point to block until. If this time point is reached
+         * @param timeout_time The maximum time point to block until. If this time point is reached
          *  before the flag has been set then the function will return false.
          * @return Returns true if the flag has been set. Returns false if the flag had not been set
          *  when the time point was reached.
@@ -232,7 +232,7 @@ namespace prb
          * @note It is safe to have multiple theads waiting on the same instance at the same time.
          */
         template <class Clock, class Duration>
-        bool wait_until(const std::chrono::time_point<Clock,Duration> & timeoutTime) const;
+        bool wait_until(const std::chrono::time_point<Clock,Duration> & timeout_time) const;
 
     protected:
         //------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ namespace prb
          * If an instance is waiting on the flag then it must retain a shared lock on this mutex
          *  until it has finished waiting. This ensures the state is not destroyed during the wait.
          */
-        mutable std::shared_mutex m_statePointerMutex;
+        mutable std::shared_mutex m_state_ptr_mtx;
 
         // Forward declaration to the shared state structure.
         struct state;
@@ -268,7 +268,7 @@ namespace prb
          * This will be null if this instance has no shared state. This can happen if a
          *  shared_flag_reader was default-constructed, or the shared state was moved away.
          * 
-         * Access to this variable is protected by m_statePointerMutex.
+         * Access to this variable is protected by m_state_ptr_mtx.
          * 
          * @todo Manage this manually in future so that we can count the number of remaining writers
          */
@@ -282,25 +282,25 @@ namespace prb
     struct shared_flag_reader::state
     {
         /**
-         * Protects access to m_conditionVariable and m_flag.
+         * Protects access to m_cond_var and m_flag.
          * To avoid deadlock, instances of shared_flag_reader and shared_flag must always lock
-         *  their own m_statePointerMutex before locking m_stateContentMutex.
+         *  their own m_state_ptr_mtx before locking m_state_data_mtx.
          */
-        mutable std::mutex m_stateContentMutex;
+        mutable std::mutex m_state_data_mtx;
 
         /**
          * Allows threads to wait on the flag value and be notified when it changes.
          * 
-         * This is protected by m_stateContentMutex. Threads waiting on this must lock that
+         * This is protected by m_state_data_mtx. Threads waiting on this must lock that
          *  mutex.
          */
-        std::condition_variable m_conditionVariable;
+        std::condition_variable m_cond_var;
 
         /**
          * Indicates if the flag is has been set.
          * When this has been set to true, it should never return to false.
          * 
-         * This is protected by m_stateContentMutex.
+         * This is protected by m_state_data_mtx.
          */
         bool m_flag{ false };
     };
@@ -310,26 +310,26 @@ namespace prb
     // Template implementations.
 
     template <class Rep, class Period>
-    bool shared_flag_reader::wait_for(const std::chrono::duration<Rep, Period> & timeoutDuration) const
+    bool shared_flag_reader::wait_for(const std::chrono::duration<Rep, Period> & timeout_duration) const
     {
-        std::shared_lock<decltype(m_statePointerMutex)> outerLock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
-        m_state->m_conditionVariable.wait_for(innerLock, timeoutDuration, [this]{ return m_state->m_flag; });
+        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        m_state->m_cond_var.wait_for(innerLock, timeout_duration, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }
 
     template <class Clock, class Duration>
-    bool shared_flag_reader::wait_until(const std::chrono::time_point<Clock,Duration> & timeoutTime) const
+    bool shared_flag_reader::wait_until(const std::chrono::time_point<Clock,Duration> & timeout_time) const
     {
-        std::shared_lock<decltype(m_statePointerMutex)> outerLock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
-        m_state->m_conditionVariable.wait_until(innerLock, timeoutTime, [this]{ return m_state->m_flag; });
+        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        m_state->m_cond_var.wait_until(innerLock, timeout_time, [this]{ return m_state->m_flag; });
         return m_state->m_flag;
     }
 }

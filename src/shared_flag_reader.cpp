@@ -20,8 +20,8 @@ namespace prb
 
     shared_flag_reader & shared_flag_reader::operator=(const shared_flag_reader & other)
     {
-        std::unique_lock<decltype(m_statePointerMutex)> thisLock{ m_statePointerMutex, std::defer_lock };
-        std::shared_lock<decltype(m_statePointerMutex)> otherLock{ other.m_statePointerMutex, std::defer_lock };
+        std::unique_lock<decltype(m_state_ptr_mtx)> thisLock{ m_state_ptr_mtx, std::defer_lock };
+        std::shared_lock<decltype(m_state_ptr_mtx)> otherLock{ other.m_state_ptr_mtx, std::defer_lock };
         std::lock(thisLock, otherLock);
 
         if (!other.m_state)
@@ -41,8 +41,8 @@ namespace prb
         if (this == &other)
             return *this;
 
-        std::unique_lock<decltype(m_statePointerMutex)> thisLock{ m_statePointerMutex, std::defer_lock };
-        std::unique_lock<decltype(m_statePointerMutex)> otherLock{ other.m_statePointerMutex, std::defer_lock };
+        std::unique_lock<decltype(m_state_ptr_mtx)> thisLock{ m_state_ptr_mtx, std::defer_lock };
+        std::unique_lock<decltype(m_state_ptr_mtx)> otherLock{ other.m_state_ptr_mtx, std::defer_lock };
         std::lock(thisLock, otherLock);
 
         if (!other.m_state)
@@ -62,17 +62,17 @@ namespace prb
 
     bool shared_flag_reader::valid() const noexcept
     {
-        std::shared_lock<decltype(m_statePointerMutex)> lock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> lock{ m_state_ptr_mtx };
         return m_state != nullptr;
     }
 
     bool shared_flag_reader::get() const
     {
-        std::shared_lock<decltype(m_statePointerMutex)> outerLock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::lock_guard<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::lock_guard<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
         return m_state->m_flag;
     }
 
@@ -83,11 +83,11 @@ namespace prb
 
     void shared_flag_reader::wait() const
     {
-        std::shared_lock<decltype(m_statePointerMutex)> outerLock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
-        m_state->m_conditionVariable.wait(innerLock, [this]{ return m_state->m_flag; });
+        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
+        m_state->m_cond_var.wait(innerLock, [this]{ return m_state->m_flag; });
     }
 }

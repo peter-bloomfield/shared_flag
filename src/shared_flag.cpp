@@ -48,16 +48,16 @@ namespace prb
 
     void shared_flag::set()
     {
-        std::shared_lock<decltype(m_statePointerMutex)> outerLock{ m_statePointerMutex };
+        std::shared_lock<decltype(m_state_ptr_mtx)> outerLock{ m_state_ptr_mtx };
         if (!m_state)
             throw std::logic_error{ "Shared state has been moved away." };
 
-        std::unique_lock<decltype(state::m_stateContentMutex)> innerLock{ m_state->m_stateContentMutex };
+        std::unique_lock<decltype(state::m_state_data_mtx)> innerLock{ m_state->m_state_data_mtx };
         if (!m_state->m_flag)
         {
             m_state->m_flag = true;
             innerLock.unlock();
-            m_state->m_conditionVariable.notify_all();
+            m_state->m_cond_var.notify_all();
         }
     }
 }
