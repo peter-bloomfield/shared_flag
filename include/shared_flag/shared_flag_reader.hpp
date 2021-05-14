@@ -300,7 +300,7 @@ namespace prb
          * 
          * This is protected by m_stateContentMutex.
          */
-        volatile bool m_flag{ false };
+        bool m_flag{ false };
     };
 
 
